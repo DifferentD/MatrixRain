@@ -1,2 +1,2 @@
 # MatrixRain
-![Безымянный.png](https://github.com/DifferentD/MatrixRain/blob/master/Безымянный.png)
+![Preview.png](https://github.com/DifferentD/MatrixRain/blob/master/Безымянный.png)
