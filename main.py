@@ -7,37 +7,38 @@ pg.display.init()
 class App:
     def __init__(self):
         self.clock = pg.time.Clock()
-        # size: [x, speed]
+        # size: x
         self.line_arr = dict()
         for sz in all_size:
-            s1, s2 = speed_limit
-            self.line_arr[sz] = [[i, rd.randint(s1, s2)/100] for i in range(sz//2, width+1, sz) if rd.randint(0, 3)]
+            self.line_arr[sz] = [i for i in range(sz//2, width+1, sz) if rd.randint(0, 3)]
+
+        # size: x: [func()]
+        self.sym_line = dict()
+        for sz in all_size:
+            self.sym_line[sz] = dict()
+            for x in self.line_arr[sz]:
+                s1, s2 = speed_limit
+                speed = rd.randint(s1, s2) / 100
+                self.sym_line[sz][x] = [Symbol_line(sz, -height, speed)]
+                for _ in range(height // sz // 9):
+                    app_line = self.sym_line[sz][x]
+                    app_line.append(Symbol_line(sz, -sz * 2 - height - sum([f.length * sz for f in app_line]), speed))
 
     def run(self):
-        # size: x: [func()]
-        sym_line = dict()
-        for sz in all_size:
-            sym_line[sz] = dict()
-            for x, speed in self.line_arr[sz]:
-                sym_line[sz][x] = [Symbol_line(sz, -height)]
-                for _ in range(height//sz//9):
-                    app_line = sym_line[sz][x]
-                    app_line.append(Symbol_line(sz, -sz*2-height-sum([f.length*sz for f in app_line])))
-
         # Главный цикл
         while True:
             screen.fill('black')
             for sz in range(len(all_size) - 1, -1, -1):
                 size = all_size[sz]
-                for x, speed in self.line_arr[size]:
-                    for f in range(len(sym_line[size][x])):
-                        now_draw = sym_line[size][x][f]
+                for x in self.line_arr[size]:
+                    for f in range(len(self.sym_line[size][x])):
+                        now_draw = self.sym_line[size][x][f]
                         # Изменить символ в строке
                         if not rd.randint(0, change_intrv):
                             now_draw.replace_sym()
                         # Движение строки вниз или в начало экрана
-                        restart = f+1 if f != len(sym_line[size][x])-1 else 0
-                        now_draw.move(speed, sym_line[size][x][restart].y)
+                        restart = f+1 if f != len(self.sym_line[size][x])-1 else 0
+                        now_draw.move(self.sym_line[size][x][restart].y)
                         now_draw.draw_line(x)
 
             pg.display.flip()
@@ -51,8 +52,9 @@ class Symbol_line():
     Каждый символ выбирает цвет из сгенерированного списка colors.
     Первый цвет - белый. Остальные цвета - color_mtx, который становится темнее к концу.
     """
-    def __init__(self, size, y):
+    def __init__(self, size, y, speed):
         self.size = size
+        self.speed = speed
         self.y = y
         self.length = rd.randint(4, 9)
         # size: [(r, g, b) x(length)]
@@ -67,10 +69,10 @@ class Symbol_line():
         self.font = pg.font.Font('font/ms mincho.ttf', size)
         self.kana_arr = [self.font.render(rd.choice(katakana), True, self.colors[k]) for k in range(self.length)]
 
-    def move(self, move, last):
+    def move(self, last):
         # если строка вышла за границу, то строка возвращается обратно
         flaq = (self.y > height) and (last > self.size)
-        self.y += move - ((self.y+self.length*self.size)*flaq)
+        self.y += self.speed - ((self.y+self.length*self.size)*flaq)
 
     def replace_sym(self):
         # Заменяем рандомный символ из строки
@@ -85,8 +87,8 @@ class Symbol_line():
 
 # START VALUE
 katakana = [chr(i) for i in range(0xFF66,0xFF9E)]  # '1234567890'.strip()
-all_size = [60, 30, 20, 10]  # Размеры символов и кол-во слоев
-color_mtx = (57, 255, 20)     # 57, 255, 20 | 85, 85, 255 | 254, 89, 194
+all_size = [60, 30, 20]      # Размеры символов и кол-во слоев
+color_mtx = (57, 255, 20)    # 57, 255, 20 | 85, 85, 255 | 254, 89, 194
 speed_limit = (200, 400)     # Минимальная и максимальная скорость
 change_intrv = 49            # Шанс изменения символа в строке
 
